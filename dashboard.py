@@ -20,7 +20,7 @@ from business_insights import analyze_promotion_impact, analyze_weekend_vs_weekd
 # Set page configuration
 st.set_page_config(
     page_title="Rossmann Sales Forecasting Dashboard",
-    page_icon="Data\statistic-icon.png",
+    page_icon="https://png.pngtree.com/png-vector/20220701/ourmid/pngtree-statistic-icon-vector-logo-template-illustration-design-png-image_5676536.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -141,7 +141,7 @@ if selected_page == "Overview":
         """)
     
     with col2:
-        st.image("Data\statistic-icon.png", width=300)
+        st.image("https://png.pngtree.com/png-vector/20220701/ourmid/pngtree-statistic-icon-vector-logo-template-illustration-design-png-image_5676536.png", width=300)
     
     # Load data button
     if st.button("Load Dataset"):
