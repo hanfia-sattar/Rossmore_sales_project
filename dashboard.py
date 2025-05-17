@@ -161,29 +161,6 @@ if selected_page == "Overview":
             else:
                 st.error("Error loading data. Please check if the dataset files exist in the Data directory.")
     
-
-
-
-    st.markdown("""
-<style>
-    /* Metric label (title) */
-    div[data-testid="stMetricLabel"] {
-        font-size: 20px;
-        font-weight: 600;
-    }
-    
-    /* Metric value */
-    div[data-testid="stMetricValue"] {
-        font-size: 15px;
-        font-weight:400;
-    }
-    
-    /* Metric delta (if you use it) */
-    div[data-testid="stMetricDelta"] {
-        font-size: 16px;
-    }
-</style>
-""", unsafe_allow_html=True)
     # Display dataset preview if loaded
     if st.session_state.data_loaded:
         st.markdown("<div class='section-header'>Dataset Preview</div>", unsafe_allow_html=True)
@@ -197,27 +174,37 @@ if selected_page == "Overview":
         with tab2:
             store_cols = ['Store', 'StoreType', 'Assortment', 'CompetitionDistance', 'Promo2']
             st.dataframe(st.session_state.df_subset[store_cols].drop_duplicates().head(10))
-
-   
+        
         # Display basic statistics
-    st.markdown("<div class='subsection-header'>Basic Statistics</div>", unsafe_allow_html=True)
+        st.markdown("<div class='subsection-header'>Basic Statistics</div>", unsafe_allow_html=True)
         
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div style='font-size:18px; color:gray;'>Total Stores</div>
+            <div style='font-size:28px; font-weight:bold;'>{st.session_state.df['Store'].nunique():,}</div>
+            """, unsafe_allow_html=True)
 
+        with col2:
+            st.markdown(f"""
+            <div style='font-size:18px; color:gray;'>Date Range</div>
+            <div style='font-size:28px; font-weight:bold;'>
+                {st.session_state.df['Date'].min().strftime('%Y-%m-%d')} to {st.session_state.df['Date'].max().strftime('%Y-%m-%d')}
+            </div>
+            """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4 = st.columns(4)
-        
-    with col1:
-            st.metric("Total Stores", f"{st.session_state.df['Store'].nunique():,}")
-        
-    with col2:
-            st.metric("Date Range", f"{st.session_state.df['Date'].min().strftime('%Y-%m-%d')} to {st.session_state.df['Date'].max().strftime('%Y-%m-%d')}")
-        
-    with col3:
-            st.metric("Average Daily Sales", f"${st.session_state.df['Sales'].mean():,.2f}")
-        
-    with col4:
-            st.metric("Total Sales", f"${st.session_state.df['Sales'].sum():,.2f}")
+        with col3:
+            st.markdown(f"""
+            <div style='font-size:18px; color:gray;'>Average Daily Sales</div>
+            <div style='font-size:28px; font-weight:bold;'>${st.session_state.df['Sales'].mean():,.2f}</div>
+            """, unsafe_allow_html=True)
 
+        with col4:
+            st.markdown(f"""
+            <div style='font-size:18px; color:gray;'>Total Sales</div>
+            <div style='font-size:28px; font-weight:bold;'>${st.session_state.df['Sales'].sum():,.2f}</div>
+            """, unsafe_allow_html=True)
 # Data Exploration Page
 elif selected_page == "Data Exploration":
     st.markdown("<div class='main-header'>Exploratory Data Analysis</div>", unsafe_allow_html=True)
