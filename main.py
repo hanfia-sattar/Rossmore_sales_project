@@ -30,6 +30,7 @@ def main():
     # Select a subset of stores for demonstration
     store_ids = df['Store'].unique()[:5]  # First 5 stores
     df_subset = df[df['Store'].isin(store_ids)]
+    print(f"Processed data shape: {df_subset.shape}")
     
     # Step 2: Perform exploratory data analysis
     print("\nStep 2: Performing exploratory data analysis...")
@@ -41,6 +42,7 @@ def main():
     print(f"Processed data shape: {processed_df.shape}")
     print("Added features:", [col for col in processed_df.columns if col not in df.columns])
     
+
     # Step 4: Get feature columns for modeling
     features = get_feature_columns(processed_df)
     print("Features used for modeling:", features)

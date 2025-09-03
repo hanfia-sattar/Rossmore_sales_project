@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from data_preprocessing import load_rossmann_data, preprocess_data, get_feature_columns, split_train_test, generate_future_dates
 from exploratory_analysis import plot_sales_by_store, plot_sales_by_day_of_week, plot_sales_by_store_type, plot_sales_by_month, plot_sales_vs_promo, plot_correlation_matrix
 from forecasting_pipeline import train_models, evaluate_all_models, forecast_sales, save_model_and_results
+from hybrid_stacking_model import HybridStackingModel
 from business_insights import analyze_promotion_impact, analyze_weekend_vs_weekday, plot_forecasted_sales_by_store, plot_forecasted_sales_by_day
 
 # Set page configuration
@@ -409,29 +410,48 @@ elif selected_page == "Model Training":
         - Linear Regression
         - Random Forest
         - XGBoost
-        """)
+        - HYbrid Stacking Model (combining base models with LSTM)    """)
         
         if st.button("Train Models"):
             with st.spinner("Training models..."):
                 # Split data into training and testing sets
                 train_df, test_df = split_train_test(st.session_state.processed_df, test_days=14)
-                
                 # Prepare features and target
                 X_train = train_df[st.session_state.features]
                 y_train = train_df['Sales']
                 X_test = test_df[st.session_state.features]
                 y_test = test_df['Sales']
-                
-                # Train models
+
+                # Train base models
                 models = train_models(X_train, y_train)
-                st.session_state.models = models
-                
-                # Evaluate models
                 results, best_model_name = evaluate_all_models(models, X_test, y_test)
-                st.session_state.best_model = models[best_model_name]
+
+                # Train hybrid stacking model
+                stacking_model = HybridStackingModel(lstm_epochs=20)
+                stacking_model.fit_stacking(X_train, y_train, X_test, y_test)
+                # Calculate predictions for stacking model
+                stacking_preds = stacking_model.predict(X_test)
+                # Calculate errors
+                from sklearn.metrics import mean_absolute_error, r2_score
+                stacking_rmse = np.sqrt(np.mean((y_test - stacking_preds) ** 2))
+                stacking_mae = mean_absolute_error(y_test, stacking_preds)
+                stacking_mape = np.mean(np.abs((y_test - stacking_preds) / y_test)) * 100
+                stacking_r2 = r2_score(y_test, stacking_preds)
+                stacking_result = {
+                    'rmse': stacking_rmse,
+                    'mae': stacking_mae,
+                    'mape': stacking_mape,
+                    'r2': stacking_r2
+                }
+                results['hybrid_stacking'] = stacking_result
+                models['hybrid_stacking'] = stacking_model
+
+                # Find best model by RMSE
+                best_model_name = min(results, key=lambda k: results[k]['rmse'])
+                st.session_state.models = models
                 st.session_state.model_results = results
                 st.session_state.best_model_name = best_model_name
-                
+                st.session_state.best_model = models[best_model_name]
                 st.success(f"Models trained successfully! Best model: {best_model_name}")
         
         if st.session_state.models is not None:
@@ -445,8 +465,8 @@ elif selected_page == "Model Training":
                     'Model': model_name.replace('_', ' ').title(),
                     'RMSE': result['rmse'],
                     'MAE': result['mae'],
-                    'MAPE (%)': result['mape'],
-                    'R² Score': result['r2']
+                    'MAPE (%)': result.get('mape', np.nan),
+                    'R² Score': result.get('r2', np.nan)
                 })
             
             model_df = pd.DataFrame(model_comparison)
@@ -467,12 +487,20 @@ elif selected_page == "Model Training":
             fig.update_layout(xaxis_title='Model', yaxis_title='RMSE (lower is better)')
             st.plotly_chart(fig, use_container_width=True)
             
+            # MAE Comparison
+            fig = px.bar(model_df, x='Model', y='MAE', title='Mean Absolute Error (MAE) by Model',
+                        color='Model', text_auto='.2f')
+            fig.update_layout(xaxis_title='Model', yaxis_title='MAE (lower is better)')
+            st.plotly_chart(fig, use_container_width=True)
+
             # R² Score Comparison
             fig = px.bar(model_df, x='Model', y='R² Score', title='R² Score by Model',
                         color='Model', text_auto='.4f')
             fig.update_layout(xaxis_title='Model', yaxis_title='R² Score (higher is better)')
             st.plotly_chart(fig, use_container_width=True)
             
+
+
             # Feature Importance (for Random Forest and XGBoost)
             st.markdown("<div class='section-header'>Feature Importance</div>", unsafe_allow_html=True)
             
@@ -551,20 +579,30 @@ elif selected_page == "Forecasting":
                 with st.spinner(f"Generating {forecast_days}-day forecast for {len(forecast_stores)} stores..."):
                     # Generate future dates for forecasting
                     last_date = st.session_state.processed_df['Date'].max()
-                    
-                    # Use the original dataframe for future date generation
                     future_df = generate_future_dates(last_date, forecast_days, forecast_stores, st.session_state.df_subset)
-                    
                     # Forecast sales using the best model
-                    forecast_results = forecast_sales(st.session_state.best_model, 
-                                                     st.session_state.processed_df, 
-                                                     future_df, 
-                                                     st.session_state.features)
-                    
-                    st.session_state.forecast_results = forecast_results
-                    
-                    st.success(f"Sales forecast generated successfully for {len(forecast_stores)} stores over {forecast_days} days!")
-            
+                    best_model = st.session_state.best_model
+                    if hasattr(best_model, 'predict'):
+                        if isinstance(best_model, HybridStackingModel):
+                            # Preprocess future data for stacking model
+                            combined_df = pd.concat([st.session_state.processed_df, future_df], ignore_index=True)
+                            processed_combined = preprocess_data(combined_df)
+                            processed_future = processed_combined[processed_combined['Date'] > last_date]
+                                # Ensure all feature columns exist in processed_future
+                                for col in st.session_state.features:
+                                    if col not in processed_future.columns:
+                                        processed_future[col] = 0  # Add missing dummy columns with default value
+                            X_future = processed_future[st.session_state.features]
+                            preds = best_model.predict(X_future)
+                            processed_future['Predicted_Sales'] = preds
+                            st.session_state.forecast_results = processed_future
+                        else:
+                            forecast_results = forecast_sales(best_model, st.session_state.processed_df, future_df, st.session_state.features)
+                            st.session_state.forecast_results = forecast_results
+                        st.success(f"Sales forecast generated successfully for {len(forecast_stores)} stores over {forecast_days} days!")
+                    else:
+                     st.error("Best model does not support prediction.")
+#            
             if st.session_state.forecast_results is not None:
                 # Display forecast results
                 st.markdown("<div class='section-header'>Forecast Results</div>", unsafe_allow_html=True)
