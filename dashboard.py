@@ -465,8 +465,8 @@ elif selected_page == "Model Training":
                     'Model': model_name.replace('_', ' ').title(),
                     'RMSE': result['rmse'],
                     'MAE': result['mae'],
-                    'MAPE (%)': result.get('mape', np.nan),
-                    'R² Score': result.get('r2', np.nan)
+                    'MAPE (%)':result['mape'],
+                    'R² Score':result['r2']    
                 })
             
             model_df = pd.DataFrame(model_comparison)
@@ -491,6 +491,12 @@ elif selected_page == "Model Training":
             fig = px.bar(model_df, x='Model', y='MAE', title='Mean Absolute Error (MAE) by Model',
                         color='Model', text_auto='.2f')
             fig.update_layout(xaxis_title='Model', yaxis_title='MAE (lower is better)')
+            st.plotly_chart(fig, use_container_width=True)
+
+             # MAPE(%) Comparison
+            fig = px.bar(model_df, x='Model', y='MAPE (%)', title='Mean Absolute Percentage Error MAPE(%) by Model',
+                        color='Model', text_auto='.2f')
+            fig.update_layout(xaxis_title='Model', yaxis_title='MAPE(%) (lower is better)')
             st.plotly_chart(fig, use_container_width=True)
 
             # R² Score Comparison
@@ -589,7 +595,7 @@ elif selected_page == "Forecasting":
                             processed_combined = preprocess_data(combined_df)
                             processed_future = processed_combined[processed_combined['Date'] > last_date]
                                 # Ensure all feature columns exist in processed_future
-                                for col in st.session_state.features:
+                            for col in st.session_state.features:
                                     if col not in processed_future.columns:
                                         processed_future[col] = 0  # Add missing dummy columns with default value
                             X_future = processed_future[st.session_state.features]

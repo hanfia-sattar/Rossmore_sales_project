@@ -11,7 +11,6 @@ from tensorflow.keras.optimizers import Adam
 
 class HybridStackingModel:
     def __init__(self, lstm_epochs=10, lstm_batch_size=32):
-        self.lr = LinearRegression()
         self.rf = RandomForestRegressor(n_estimators=100, random_state=42)
         self.xgb = xgb.XGBRegressor(n_estimators=100, random_state=42)
         self.lstm_epochs = lstm_epochs
@@ -37,15 +36,13 @@ class HybridStackingModel:
 
     def fit(self, X, y):
         self.feature_names = X.columns.tolist()
-        # Fit base models
-        self.lr.fit(X, y)
+        # Fit base models (only rf, xgb, lstm)
         self.rf.fit(X, y)
         self.xgb.fit(X, y)
         self.fit_lstm(X, y)
 
     def predict_base(self, X):
         preds = {
-            'lr': self.lr.predict(X),
             'rf': self.rf.predict(X),
             'xgb': self.xgb.predict(X),
             'lstm': self.predict_lstm(X)

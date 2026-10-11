@@ -81,28 +81,35 @@ def preprocess_data(data):
     df['IsWeekend'] = (df['DayOfWeek'] >= 6).astype(int)  # In Rossmann data, 7=Sunday, 1=Monday
     
     # Step 2: Create lag features
-    # Group by store to create store-specific lags
+    # Group by store to create store-specific lags and rolling averages
     for store in df['Store'].unique():
         store_data = df[df['Store'] == store].sort_values('Date')
-        
         # Previous day sales
         store_data['Sales_Lag1'] = store_data['Sales'].shift(1)
-        
+        # Previous 2, 3, 14, 30 day lags
+        store_data['Sales_Lag2'] = store_data['Sales'].shift(2)
+        store_data['Sales_Lag3'] = store_data['Sales'].shift(3)
+        store_data['Sales_Lag14'] = store_data['Sales'].shift(14)
+        store_data['Sales_Lag30'] = store_data['Sales'].shift(30)
         # Previous week sales
         store_data['Sales_Lag7'] = store_data['Sales'].shift(7)
-        
-        # 7-day moving average
+        # 7-day, 14-day, 30-day moving averages
         store_data['Sales_MA7'] = store_data['Sales'].rolling(window=7, min_periods=1).mean()
-        
+        store_data['Sales_MA14'] = store_data['Sales'].rolling(window=14, min_periods=1).mean()
+        store_data['Sales_MA30'] = store_data['Sales'].rolling(window=30, min_periods=1).mean()
         # Update the main dataframe
         df.loc[df['Store'] == store, 'Sales_Lag1'] = store_data['Sales_Lag1']
+        df.loc[df['Store'] == store, 'Sales_Lag2'] = store_data['Sales_Lag2']
+        df.loc[df['Store'] == store, 'Sales_Lag3'] = store_data['Sales_Lag3']
         df.loc[df['Store'] == store, 'Sales_Lag7'] = store_data['Sales_Lag7']
+        df.loc[df['Store'] == store, 'Sales_Lag14'] = store_data['Sales_Lag14']
+        df.loc[df['Store'] == store, 'Sales_Lag30'] = store_data['Sales_Lag30']
         df.loc[df['Store'] == store, 'Sales_MA7'] = store_data['Sales_MA7']
-    
+        df.loc[df['Store'] == store, 'Sales_MA14'] = store_data['Sales_MA14']
+        df.loc[df['Store'] == store, 'Sales_MA30'] = store_data['Sales_MA30']
     # Handle missing values in lag features
-    df['Sales_Lag1'].fillna(df['Sales_Lag1'].mean(), inplace=True)
-    df['Sales_Lag7'].fillna(df['Sales_Lag7'].mean(), inplace=True)
-    df['Sales_MA7'].fillna(df['Sales_MA7'].mean(), inplace=True)
+    for col in ['Sales_Lag1','Sales_Lag2','Sales_Lag3','Sales_Lag7','Sales_Lag14','Sales_Lag30','Sales_MA7','Sales_MA14','Sales_MA30']:
+        df[col].fillna(df[col].mean(), inplace=True)
     
     # Step 3: Handle categorical variables
     # Convert PromoInterval to a more usable feature
