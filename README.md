@@ -1,5 +1,5 @@
 <div align="center">
-# 📈 Rossmann Sales Forecasting
+# Rossmann Sales Forecasting
  
 ### End-to-end retail sales forecasting with machine learning and an interactive Streamlit dashboard
  
