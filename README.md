@@ -10,23 +10,6 @@
 ![Plotly](https://img.shields.io/badge/Plotly-Visualization-3F4F75?logo=plotly&logoColor=white)
  
 </div>
----
- 
-## 📌 Table of Contents
- 
-- [Project Overview](#-project-overview)
-- [Key Results](#-key-results)
-- [Highlights](#-highlights)
-- [Dataset](#-dataset)
-- [Features Used](#-features-used)
-- [Models](#-models)
-- [Results](#-results)
-- [Dashboard Pages](#-dashboard-pages)
-- [Repository Structure](#-repository-structure)
-- [Tech Stack](#-tech-stack)
-- [Notes](#-notes)
-- [Author](#-author)
----
  
 ## 🎯 Project Overview
  
@@ -134,26 +117,6 @@ Lag and rolling features are computed separately for each store, and missing val
 | **Forecasting** | Forecast tables, charts, and per-store timelines for 7 to 30 days ahead |
 | **Business Insights** | Promotion lift, weekend vs. weekday lift, top store, best day, and recommendations |
  
-## 📁 Repository Structure
- 
-```
-Rossmore_sales_project/
-├── dashboard_copy.py            # Streamlit dashboard (main app)
-├── dashboard.py                 # Original dashboard version
-├── app.py                       # Additional app
-├── main.py / main_2.py          # CLI workflow
-├── data_preprocessing.py        # Loading, cleaning, feature engineering, splits
-├── exploratory_analysis.py      # EDA plotting helpers
-├── forecasting_pipeline.py      # Model training, evaluation, forecasting
-├── business_insights.py         # Promotion / weekend analysis and summaries
-├── data_cal.py                  # Data calculations
-├── Data/                        # train.csv and store.csv
-├── images/                      # README images
-├── sales_forecast_results.csv   # Saved forecast output
-├── rossmann_sales_forecast_random_forest_model.pkl
-├── requirements.txt
-└── README.md
-```
  
 ## 🛠️ Tech Stack
  
@@ -164,12 +127,9 @@ Rossmore_sales_project/
   - Linear Regression (scikit-learn)
   - Random Forest Regressor (scikit-learn)
   - XGBoost
+    
 ## ⚠️ Notes
  
 - For speed, the dashboard uses the **first 5 stores** as a demo subset.
 - Future promotion and school-holiday flags are generated randomly (about 30% promo, 20% school holiday), so forecasts reflect assumed patterns rather than a real promotion calendar.
-## 👩‍💻 Author
- 
-**Hanfia Sattar**
-GitHub: [@hanfia-sattar](https://github.com/hanfia-sattar)
- 
+
